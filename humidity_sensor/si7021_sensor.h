@@ -7,6 +7,14 @@ typedef enum
 	SI7021_FAIL
 } SI7021_RET_VAL;
 
+typedef struct
+{
+	float humidity;
+	float temperature;
+} SI7021_READING;
+
 SI7021_RET_VAL si7021_init();
+void si7021_deinit();
+SI7021_RET_VAL si7021_read(SI7021_READING* sensor_reading);
 
 #endif  // _SI7021_SENSOR

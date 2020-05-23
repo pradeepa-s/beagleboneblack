@@ -11,6 +11,7 @@
 static int file_handle;
 
 static SI7021_RET_VAL verify_ic();
+static SI7021_RET_VAL i2c_transfer(const char* cmd, const size_t cmd_length, char* read_buf, const size_t read_length);
 
 SI7021_RET_VAL si7021_init()
 {
@@ -28,7 +29,7 @@ SI7021_RET_VAL si7021_init()
 	{
 		if (ioctl(file_handle, I2C_SLAVE, addr) < 0)
 		{
-			close(file_handle);
+			si7021_deinit();
 			ret = SI7021_FAIL;
 		}
 	}
@@ -37,16 +38,48 @@ SI7021_RET_VAL si7021_init()
 	if (ret == SI7021_SUCCESS)
 	{
 		ret = verify_ic();
-
-		if (ret != SI7021_SUCCESS)
-		{
-			printf("Failed veri\n");
-		//	close(file_handle);
-		}
-		close(file_handle);
 	}
 
 	return ret;
+}
+
+SI7021_RET_VAL si7021_read(SI7021_READING* sensor_reading)
+{
+	SI7021_RET_VAL ret = SI7021_FAIL;
+
+	if (!sensor_reading)
+	{
+		return ret;
+	}
+
+	const char measure_rel_humidity = 0xE5;
+	const char read_temperature = 0xE0;
+	unsigned short temperature, humidity;
+
+	// Read humidity
+	ret = i2c_transfer(&measure_rel_humidity, sizeof(measure_rel_humidity), (char*)&humidity, sizeof(humidity));
+
+	if (ret == SI7021_SUCCESS)
+	{
+		// Read temperature
+		ret = i2c_transfer(&read_temperature, sizeof(read_temperature), (char*)&temperature, sizeof(temperature));
+	}
+
+	if (ret == SI7021_SUCCESS)
+	{
+		// Correct endian-ness
+		temperature = ((temperature & 0x00FF) << 8) | ((temperature & 0xFF00) >> 8);
+		humidity = ((humidity & 0x00FF) << 8) | ((humidity & 0xFF00) >> 8);
+		sensor_reading->humidity= ((125.0 * humidity) / 65536.0) - 6;
+		sensor_reading->temperature = ((175.72 * temperature) / 65536.0) - 46.85;
+	}
+
+	return ret;
+}
+
+void si7021_deinit()
+{
+	close(file_handle);
 }
 
 
@@ -59,17 +92,30 @@ SI7021_RET_VAL verify_ic()
 	const char electronic_id_2[2] = {0xFC, 0xC9};
 	char id_val[4];
 
-
-	if (write(file_handle, electronic_id_2, sizeof(electronic_id_2)) == sizeof(electronic_id_2))
+	if (i2c_transfer(electronic_id_2, 2, id_val, 4) == SI7021_SUCCESS)
 	{
-		if (read(file_handle, id_val, sizeof(id_val)) == sizeof(id_val))
+		if (id_val[0] == 0x15)
 		{
-			if (id_val[0] == 0x15)
-			{
-				ret = SI7021_SUCCESS;
-			}
+			ret = SI7021_SUCCESS;
 		}
 	}
 
 	return ret;
+}
+
+SI7021_RET_VAL i2c_transfer(const char* cmd, const size_t cmd_length, char* read_buf, const size_t read_length)
+{
+	size_t transfer_length = write(file_handle, cmd, cmd_length);
+
+	if (transfer_length == cmd_length)
+	{
+		transfer_length = read(file_handle, read_buf, read_length);
+
+		if (transfer_length == read_length)
+		{
+			return SI7021_SUCCESS;
+		}
+	}
+
+	return SI7021_FAIL;
 }
