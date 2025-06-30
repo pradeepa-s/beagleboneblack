@@ -16,7 +16,7 @@ typedef struct
 	float temperature;
 } SI7021_READING;
 
-SI7021_RET_VAL si7021_init();
+SI7021_RET_VAL si7021_init(const char* drv_path);
 void si7021_deinit();
 SI7021_RET_VAL si7021_read(SI7021_READING* sensor_reading);
 
