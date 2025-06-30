@@ -6,31 +6,31 @@
 #include <unistd.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 
+
+static const char filename[] = "/dev/i2c-1";
+static const int addr = 0x40;
 
 static int file_handle;
-
 static SI7021_RET_VAL verify_ic();
 static SI7021_RET_VAL i2c_transfer(const char* cmd, const size_t cmd_length, char* read_buf, const size_t read_length);
 
 SI7021_RET_VAL si7021_init()
 {
 	SI7021_RET_VAL ret = SI7021_SUCCESS;
-	const char filename[] = "/dev/i2c-2";
-	const int addr = 0x40;
-
 	file_handle = open(filename, O_RDWR);
 
 	if (file_handle < 0)
 	{
-		ret = SI7021_FAIL;
+		ret = SI7021_I2C_OPEN;
 	}
 	else
 	{
 		if (ioctl(file_handle, I2C_SLAVE, addr) < 0)
 		{
 			si7021_deinit();
-			ret = SI7021_FAIL;
+			ret = SI7021_IOCTL;
 		}
 	}
 
@@ -87,7 +87,7 @@ void si7021_deinit()
 
 SI7021_RET_VAL verify_ic()
 {
-	SI7021_RET_VAL ret = SI7021_FAIL;
+	SI7021_RET_VAL ret = SI7021_INVALID_IC;
 
 	const char electronic_id_2[2] = {0xFC, 0xC9};
 	char id_val[4];

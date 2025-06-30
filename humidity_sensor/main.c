@@ -3,13 +3,14 @@
 #include <time.h>
 #include "si7021_sensor.h"
 #include <string.h>
+#include "logger.h"
 
 // #define DEBUG
 
 #ifndef DEBUG
 static const int MAXIMUM_FILE_SIZE = 500000;  // 500 kB
-static const char temperature_humidity_log_file[] = "/home/debian/si7021_log.log";
-static const int FILENAME_END_LOCATION = 23;
+static const char temperature_humidity_log_file[] = "/home/pradeepa/si7021_log.log";
+static const int FILENAME_END_LOCATION = sizeof(temperature_humidity_log_file);
 #else  // DEBUG
 static const char temperature_humidity_log_file[] = "test_file.log";
 static const int MAXIMUM_FILE_SIZE = 5000;
@@ -32,6 +33,7 @@ int main()
 #ifndef DEBUG
 	run_actual();
 #else  // DEBUG
+    error_log("Running in debug mode.");
 	int i = 0;
 	while(i++ <= 1500)
 	{
@@ -44,17 +46,17 @@ int main()
 #ifndef DEBUG
 void run_actual()
 {
- 	SI7021_RET_VAL ret = si7021_init();
+ 	SI7021_RET_VAL sensor_ret = si7021_init();
  	char log_entry[100];
- 
- 	if (SI7021_SUCCESS == ret)
+
+ 	if (SI7021_SUCCESS == sensor_ret)
  	{
  		SI7021_READING reading;
- 		ret = si7021_read(&reading);
- 		if (SI7021_SUCCESS == ret)
+ 		sensor_ret = si7021_read(&reading);
+ 		if (SI7021_SUCCESS == sensor_ret)
  		{
  			FILE* fp;
- 
+
  			fp = fopen(temperature_humidity_log_file, "a+");
  			if (fp)
  			{
@@ -70,25 +72,32 @@ void run_actual()
  				}
  				fclose(fp);
  			}
+            else {
+                error_log("Failed to open the file");
+            }
  		}
  	}
- 
+
+    if (sensor_ret == SI7021_SUCCESS) {
+        error_log("Sensor routines failed: %d", sensor_ret);
+    }
+
  	si7021_deinit();
 }
 #else  // DEBUG
 void run_test(unsigned int count)
 {
- 	SI7021_RET_VAL ret = SI7021_SUCCESS;
+ 	SI7021_RET_VAL sensor_ret = SI7021_SUCCESS;
  	char log_entry[100];
  
- 	if (SI7021_SUCCESS == ret)
+ 	if (SI7021_SUCCESS == sensor_ret)
  	{
  		SI7021_READING reading;
 
 		reading.humidity = count;
 		reading.temperature = count + 1;
 
- 		if (SI7021_SUCCESS == ret)
+ 		if (SI7021_SUCCESS == sensor_ret)
  		{
  			FILE* fp;
  
@@ -102,7 +111,6 @@ void run_test(unsigned int count)
 					get_next_filename(backup_filenam, sizeof(backup_filenam));
 					if (0 == backup_file(fp, backup_filenam))
 					{
-						printf("Backed up: %s\n\r", backup_filenam);
 						freopen(temperature_humidity_log_file, "w", fp);
 					}
  				}
