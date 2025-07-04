@@ -1,5 +1,17 @@
 # README
 
+## Structure of the repository
+
+This repository builds the `log_vitals` application.
+`log_vitals` reads data from sensors connected to the device and records the readings in database/s or file/s.
+
+src
+libs
+    error_logger
+    sqlite_logger
+    file_logger
+    si7021
+
 ## Build and deploy with sqllite3
 
 1. Install sqlite3

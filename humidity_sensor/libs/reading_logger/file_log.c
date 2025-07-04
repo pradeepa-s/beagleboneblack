@@ -1,4 +1,3 @@
-#include "sensor_conf.h"
 #include "reading_logger.h"
 #include "file_log_conf.h"
 #include "error_logger.h"

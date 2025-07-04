@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.10)
 
 project(log_vitals C)
 
-if (LOG_TYPE STREQUAL "File")
-    add_executable(${PROJECT_NAME} main.c si7021_sensor.c error_logger.c file_log.c)
-elseif (LOG_TYPE STREQUAL "Sql")
-    add_executable(${PROJECT_NAME} main.c si7021_sensor.c error_logger.c sqlite_log.c)
-    target_link_libraries(${PROJECT_NAME} sqlite3)
-else()
-    message(FATAL_ERROR "Invalid LOG_TYPE selected. -> ${LOG_TYPE}")
-endif()
+add_subdirectory(conf/file_conf)
+add_subdirectory(conf/sqlite_conf)
+add_subdirectory(conf/si7021)
+add_subdirectory(libs/error_logger)
+add_subdirectory(libs/reading_logger)
+add_subdirectory(libs/si7021)
+
+add_executable(${PROJECT_NAME} src/main.c)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE si7021 si7021_conf reading_logger error_logger)

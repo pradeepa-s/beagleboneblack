@@ -1,0 +1,11 @@
+if (LOG_TYPE STREQUAL "File")
+    add_library(reading_logger STATIC file_log.c)
+    target_link_libraries(reading_logger PRIVATE file_conf error_logger)
+elseif (LOG_TYPE STREQUAL "Sql")
+    add_library(reading_logger STATIC sqlite_log.c)
+    target_link_libraries(reading_logger PRIVATE sqlite3 sqlite_conf error_logger)
+else()
+    message(FATAL_ERROR "Invalid LOG_TYPE selected. -> ${LOG_TYPE}")
+endif()
+
+target_include_directories(reading_logger PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
