@@ -7,6 +7,7 @@ This repository builds the `log_vitals` application.
 
 ## Structure of the repository
 
+```
 .
 ├── conf
 │   ├── database        <- The database schema file.
@@ -18,6 +19,7 @@ This repository builds the `log_vitals` application.
 │   ├── reading_logger  <- Reading logger library supports logging a reading to either a file or database.
 │   └── si7021          <- si7021 sensor interface
 └── src                 <- Main executable
+```
 
 ## Build and deploy with sqllite3
 
